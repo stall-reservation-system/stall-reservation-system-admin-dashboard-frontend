@@ -8,7 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import StallMap from "./pages/StallMap";
 import Reservations from "./pages/Reservations";
 import NotFound from "./pages/NotFound";
-
+import Profile from "./pages/AdminProfile"; 
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -23,6 +23,7 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/stall-map" element={<StallMap />} />
           <Route path="/reservations" element={<Reservations />} />
+          <Route path="/profile" element={<Profile />} /> 
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
