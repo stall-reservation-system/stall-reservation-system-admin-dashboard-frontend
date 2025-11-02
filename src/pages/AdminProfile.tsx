@@ -1,0 +1,245 @@
+import DashboardLayout from "@/components/DashboardLayout";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { User, Mail, Phone, ShieldCheck, CalendarCheck, MapPin, Cake, Fingerprint, Key } from "lucide-react";
+import { useState } from "react";
+
+interface AdminProfile {
+  employeeId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address: string;
+  role: string;
+  dob: string;
+  nic: string;
+  joined: string;
+  lastLogin: string;
+  avatar: string;
+}
+
+const adminProfile: AdminProfile = {
+  employeeId: "CMBF001",
+  firstName: "Nuwan",
+  lastName: "Perera",
+  email: "admin@bookfair.lk",
+  phone: "+94 77 123 4567",
+  address: "No. 123, Main Street, Colombo, Sri Lanka",
+  role: "Administrator",
+  dob: "1990-07-15",
+  nic: "901234567V",
+  joined: "Jan 10, 2023",
+  lastLogin: "Nov 2, 2025, 09:15 AM",
+  avatar: "https://ui-avatars.com/api/?name=Nuwan+Perera&background=0D8ABC&color=fff",
+};
+
+const Profile = () => {
+  const [editMode, setEditMode] = useState(false);
+  const [profile, setProfile] = useState<AdminProfile>(adminProfile);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setProfile({ ...profile, [e.target.name]: e.target.value });
+  };
+
+  const handleSave = () => {
+    setEditMode(false);
+    // Normally, save to backend here
+  };
+
+  return (
+    <DashboardLayout>
+      <div className="max-w-4xl mx-auto py-12">
+        {/* Reduced height of profile box */}
+        <Card className="shadow-xl border-none bg-gradient-to-br from-accent/10 to-background min-h-[320px]">
+          <CardHeader className="flex flex-row md:items-center items-start gap-8 pb-6 border-b">
+            <img
+              src={profile.avatar}
+              alt="Admin Avatar"
+              className="w-24 h-24 rounded-full border-4 border-accent shadow-lg transition-transform hover:scale-105"
+            />
+            <div className="flex-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div>
+                  {/* Employee ID is never editable */}
+                  <div className="flex items-center gap-2 text-base font-semibold mb-1">
+                    <Key className="w-5 h-5 text-accent" />
+                    <span>Employee ID:</span>
+                    <span className="ml-2 text-foreground">{profile.employeeId}</span>
+                  </div>
+                  {/* Full Name */}
+                  <div className="flex items-center gap-2 text-base font-semibold mb-1">
+                    <User className="w-5 h-5 text-accent" />
+                    <span>Full Name:</span>
+                    {editMode ? (
+                      <>
+                        <Input
+                          name="firstName"
+                          value={profile.firstName}
+                          onChange={handleChange}
+                          placeholder="First Name"
+                          className="max-w-xs ml-2"
+                          autoFocus
+                        />
+                        <Input
+                          name="lastName"
+                          value={profile.lastName}
+                          onChange={handleChange}
+                          placeholder="Last Name"
+                          className="max-w-xs ml-2"
+                        />
+                      </>
+                    ) : (
+                      <span className="ml-2 text-foreground">{profile.firstName} {profile.lastName}</span>
+                    )}
+                  </div>
+                  {/* Role as badge only */}
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="secondary" className="px-2 py-1 text-sm">
+                      {profile.role}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2 text-base font-medium">
+                    <Mail className="w-5 h-5 text-accent" />
+                    Email: 
+                    {editMode ? (
+                      <Input
+                        name="email"
+                        value={profile.email}
+                        onChange={handleChange}
+                        className="max-w-xs ml-2"
+                        placeholder="Email"
+                      />
+                    ) : (
+                      <span className="ml-2 text-foreground">{profile.email}</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 text-base font-medium mt-1">
+                    <Phone className="w-5 h-5 text-accent" />
+                    Phone: 
+                    {editMode ? (
+                      <Input
+                        name="phone"
+                        value={profile.phone}
+                        onChange={handleChange}
+                        className="max-w-xs ml-2"
+                        placeholder="Phone"
+                      />
+                    ) : (
+                      <span className="ml-2 text-foreground">{profile.phone}</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 text-base font-medium mt-1">
+                    <MapPin className="w-5 h-5 text-accent" />
+                    Address: 
+                    {editMode ? (
+                      <Input
+                        name="address"
+                        value={profile.address}
+                        onChange={handleChange}
+                        className="max-w-xs ml-2"
+                        placeholder="Address"
+                      />
+                    ) : (
+                      <span className="ml-2 text-foreground">{profile.address}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              {!editMode && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-4"
+                  onClick={() => setEditMode(true)}
+                >
+                  Edit Profile
+                </Button>
+              )}
+            </div>
+          </CardHeader>
+
+          <CardContent className="space-y-6 px-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mt-2">
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center gap-2 text-base font-medium">
+                    <Cake className="w-5 h-5 text-accent" />
+                    Date of Birth:
+                  </div>
+                  {editMode ? (
+                    <Input
+                      name="dob"
+                      value={profile.dob}
+                      onChange={handleChange}
+                      className="max-w-xs mt-1"
+                      placeholder="Date of Birth"
+                      type="date"
+                    />
+                  ) : (
+                    <div className="pl-7 mt-1 text-foreground">{profile.dob}</div>
+                  )}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 text-base font-medium">
+                    <Fingerprint className="w-5 h-5 text-accent" />
+                    NIC:
+                  </div>
+                  {editMode ? (
+                    <Input
+                      name="nic"
+                      value={profile.nic}
+                      onChange={handleChange}
+                      className="max-w-xs mt-1"
+                      placeholder="NIC"
+                    />
+                  ) : (
+                    <div className="pl-7 mt-1 text-foreground">{profile.nic}</div>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center gap-2 text-base font-medium">
+                    <CalendarCheck className="w-5 h-5 text-accent" />
+                    Joined:
+                  </div>
+                  <div className="pl-7 mt-1 text-foreground font-semibold">
+                    {profile.joined}
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 text-base font-medium">
+                    <ShieldCheck className="w-5 h-5 text-accent" />
+                    Last Login:
+                  </div>
+                  <div className="pl-7 mt-1">
+                    <Badge variant="outline" className="px-3 py-1 text-sm">
+                      {profile.lastLogin}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {editMode && (
+              <div className="flex gap-2 justify-end mt-4">
+                <Button size="sm" variant="accent" onClick={handleSave}>
+                  Save
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setEditMode(false)}>
+                  Cancel
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </DashboardLayout>
+  );
+};
+
+export default Profile;
