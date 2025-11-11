@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -12,15 +12,10 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-// Mock admin profile data
 interface AdminProfile {
   name: string;
   avatar: string;
 }
-const adminProfile: AdminProfile = {
-  name: "Nuwan Perera",
-  avatar: "https://ui-avatars.com/api/?name=Nuwan+Perera&background=0D8ABC&color=fff",
-};
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -29,6 +24,43 @@ interface DashboardLayoutProps {
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
+
+  const [adminProfile, setAdminProfile] = useState<AdminProfile>({
+    name: "Admin",
+    avatar: "https://ui-avatars.com/api/?name=Admin&background=0D8ABC&color=fff",
+  });
+
+  useEffect(() => {
+    let mounted = true;
+    // initial fetch for sidebar profile
+    fetch("/api/profile")
+      .then((r) => r.json())
+      .then((data) => {
+        if (!mounted || !data) return;
+        const name = data.firstName && data.lastName ? `${data.firstName} ${data.lastName}` : data.name || "Admin";
+        setAdminProfile({ name, avatar: data.avatar || adminProfile.avatar });
+      })
+      .catch(() => {})
+      .finally(() => {});
+
+    const onUpdate = (e: Event) => {
+      try {
+        // CustomEvent used in save
+        const detail = (e as CustomEvent).detail;
+        if (detail) {
+          const name = detail.firstName && detail.lastName ? `${detail.firstName} ${detail.lastName}` : detail.name || adminProfile.name;
+          setAdminProfile({ name, avatar: detail.avatar || adminProfile.avatar });
+        }
+      } catch (err) {}
+    };
+
+    window.addEventListener("profile-updated", onUpdate as EventListener);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener("profile-updated", onUpdate as EventListener);
+    };
+  }, []);
 
   const handleLogout = () => {
     toast.success("Logged out successfully");

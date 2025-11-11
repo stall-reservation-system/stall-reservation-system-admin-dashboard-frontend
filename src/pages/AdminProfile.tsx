@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { User, Mail, Phone, ShieldCheck, CalendarCheck, MapPin, Cake, Fingerprint, Key } from "lucide-react";
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 
 interface AdminProfile {
   employeeId: string;
@@ -47,8 +48,26 @@ const Profile = () => {
   };
 
   const handleSave = () => {
-    setEditMode(false);
-    // Normally, save to backend here (POST/PUT to /api/profile)
+    if (!profile) return;
+    // send to mock API and update local state
+    fetch("/api/profile", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(profile),
+    })
+      .then((r) => r.json())
+      .then((updated) => {
+        setProfile(updated);
+        // notify other parts of the app (DashboardLayout) about profile update
+        try {
+          window.dispatchEvent(new CustomEvent("profile-updated", { detail: updated }));
+        } catch (e) {}
+        setEditMode(false);
+        toast.success("Profile updated");
+      })
+      .catch(() => {
+        toast.error("Failed to update profile");
+      });
   };
 
   return (

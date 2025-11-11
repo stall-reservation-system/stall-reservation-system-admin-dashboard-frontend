@@ -23,15 +23,35 @@ window.fetch = async (input: RequestInfo, init?: RequestInit) => {
       // mimic network latency
       await delay(150);
 
-      const path = url.replace("/api/", "").split(/[?#]/)[0];
-      // Only support GET for the mock
-      if (init && init.method && init.method.toUpperCase() !== "GET") {
-        return jsonResponse({ message: "Method not implemented in mock." }, 405);
-      }
+        const path = url.replace("/api/", "").split(/[?#]/)[0];
+        const method = (init && init.method ? String(init.method) : "GET").toUpperCase();
 
-      switch (path) {
-        case "profile":
-          return jsonResponse(mockProfile);
+        // Support basic CRUD for profile in the mock: GET and PUT/PATCH/POST to update in-memory mockProfile
+        if (path === "profile") {
+          if (method === "GET") return jsonResponse(mockProfile);
+
+          if (method === "PUT" || method === "PATCH" || method === "POST") {
+            try {
+              const bodyText = init && init.body ? String(init.body) : null;
+              const body = bodyText ? JSON.parse(bodyText) : {};
+              // mutate the exported mockProfile object so other modules see updates
+              Object.assign(mockProfile, body);
+              // notify success
+              return jsonResponse(mockProfile);
+            } catch (err) {
+              return jsonResponse({ message: "Invalid JSON body" }, 400);
+            }
+          }
+
+          return jsonResponse({ message: "Method not implemented in mock for profile." }, 405);
+        }
+
+        // Only support GET for other endpoints by default
+        if (method !== "GET") {
+          return jsonResponse({ message: "Method not implemented in mock." }, 405);
+        }
+
+        switch (path) {
         case "reservations":
           return jsonResponse(mockReservations);
         case "dashboard":
