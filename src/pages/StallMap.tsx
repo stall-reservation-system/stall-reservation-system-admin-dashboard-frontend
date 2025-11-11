@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -14,30 +15,21 @@ interface Stall {
 }
 
 const StallMap = () => {
-  // Mock data for stalls
-  const stalls: Stall[] = [
-    // Section A - Small stalls
-    ...Array.from({ length: 20 }, (_, i) => ({
-      id: `A${(i + 1).toString().padStart(2, '0')}`,
-      size: "small" as StallSize,
-      status: (i < 14 ? "reserved" : "available") as StallStatus,
-      publisher: i < 14 ? `Publisher ${i + 1}` : undefined,
-    })),
-    // Section B - Medium stalls
-    ...Array.from({ length: 15 }, (_, i) => ({
-      id: `B${(i + 1).toString().padStart(2, '0')}`,
-      size: "medium" as StallSize,
-      status: (i < 10 ? "reserved" : "available") as StallStatus,
-      publisher: i < 10 ? `Publisher ${i + 21}` : undefined,
-    })),
-    // Section C - Large stalls
-    ...Array.from({ length: 10 }, (_, i) => ({
-      id: `C${(i + 1).toString().padStart(2, '0')}`,
-      size: "large" as StallSize,
-      status: (i < 7 ? "reserved" : "available") as StallStatus,
-      publisher: i < 7 ? `Publisher ${i + 36}` : undefined,
-    })),
-  ];
+  const [stalls, setStalls] = useState<Stall[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    fetch("/api/stalls")
+      .then((r) => r.json())
+      .then((data) => mounted && setStalls(data))
+      .catch(() => {})
+      .finally(() => mounted && setLoading(false));
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const getSizeClass = (size: StallSize) => {
     switch (size) {
