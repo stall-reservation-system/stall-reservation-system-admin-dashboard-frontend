@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -27,60 +27,21 @@ interface Reservation {
 
 const Reservations = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock reservation data
-  const reservations: Reservation[] = [
-    {
-      id: "R001",
-      publisher: "Sarasavi Bookshop",
-      contact: "+94 77 123 4567",
-      email: "info@sarasavi.lk",
-      stalls: ["A12", "A13"],
-      genre: "General Books",
-      emailSent: true,
-      qrCode: "QR001",
-    },
-    {
-      id: "R002",
-      publisher: "Vijitha Yapa",
-      contact: "+94 77 234 5678",
-      email: "contact@vijithayapa.com",
-      stalls: ["B05"],
-      genre: "Academic",
-      emailSent: false,
-      qrCode: "QR002",
-    },
-    {
-      id: "R003",
-      publisher: "Godage Publishers",
-      contact: "+94 77 345 6789",
-      email: "info@godagepublishers.lk",
-      stalls: ["C20", "C21", "C22"],
-      genre: "Literature",
-      emailSent: true,
-      qrCode: "QR003",
-    },
-    {
-      id: "R004",
-      publisher: "Piyumi Publishers",
-      contact: "+94 77 456 7890",
-      email: "piyumi@books.lk",
-      stalls: ["A05", "A06"],
-      genre: "Children's Books",
-      emailSent: true,
-      qrCode: "QR004",
-    },
-    {
-      id: "R005",
-      publisher: "MD Gunasena",
-      contact: "+94 77 567 8901",
-      email: "mdg@gunasena.lk",
-      stalls: ["B12", "B13"],
-      genre: "Educational",
-      emailSent: false,
-      qrCode: "QR005",
-    },
-  ];
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    fetch("/api/reservations")
+      .then((r) => r.json())
+      .then((data) => mounted && setReservations(data))
+      .catch(() => {})
+      .finally(() => mounted && setLoading(false));
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const filteredReservations = reservations.filter(
     (res) =>
@@ -131,58 +92,66 @@ const Reservations = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredReservations.map((reservation) => (
-                  <TableRow key={reservation.id}>
-                    <TableCell className="font-medium">{reservation.id}</TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{reservation.publisher}</div>
-                        <div className="text-sm text-muted-foreground">{reservation.email}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{reservation.contact}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-1 flex-wrap">
-                        {reservation.stalls.map((stall) => (
-                          <Badge key={stall} variant="secondary">
-                            {stall}
-                          </Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell>{reservation.genre}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {reservation.emailSent ? (
-                          <>
-                            <CheckCircle2 className="h-4 w-4 text-green-600" />
-                            <span className="text-sm text-green-600">Sent</span>
-                          </>
-                        ) : (
-                          <>
-                            <XCircle className="h-4 w-4 text-destructive" />
-                            <span className="text-sm text-destructive">Pending</span>
-                          </>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{reservation.qrCode}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline">
-                          <Mail className="h-4 w-4 mr-1" />
-                          Email
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          <QrCode className="h-4 w-4 mr-1" />
-                          QR
-                        </Button>
-                      </div>
-                    </TableCell>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center text-muted-foreground">Loading...</TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  filteredReservations.map((reservation) => {
+                    return (
+                      <TableRow key={reservation.id}>
+                        <TableCell className="font-medium">{reservation.id}</TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{reservation.publisher}</div>
+                            <div className="text-sm text-muted-foreground">{reservation.email}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{reservation.contact}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-1 flex-wrap">
+                            {reservation.stalls.map((stall) => (
+                              <Badge key={stall} variant="secondary">
+                                {stall}
+                              </Badge>
+                            ))}
+                          </div>
+                        </TableCell>
+                        <TableCell>{reservation.genre}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {reservation.emailSent ? (
+                              <>
+                                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                <span className="text-sm text-green-600">Sent</span>
+                              </>
+                            ) : (
+                              <>
+                                <XCircle className="h-4 w-4 text-destructive" />
+                                <span className="text-sm text-destructive">Pending</span>
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{reservation.qrCode}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline">
+                              <Mail className="h-4 w-4 mr-1" />
+                              Email
+                            </Button>
+                            <Button size="sm" variant="outline">
+                              <QrCode className="h-4 w-4 mr-1" />
+                              QR
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
               </TableBody>
             </Table>
           </CardContent>

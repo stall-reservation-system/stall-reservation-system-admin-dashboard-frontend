@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -25,34 +25,21 @@ interface Vendor {
 
 const Vendors = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [vendors, setVendors] = useState<Vendor[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock vendor data
-  const vendors: Vendor[] = [
-    {
-      id: "V001",
-      name: "Sarasavi Bookshop",
-      contact: "+94 77 123 4567",
-      email: "info@sarasavi.lk",
-      stalls: ["A12", "A13"],
-      category: "General Books",
-    },
-    {
-      id: "V002",
-      name: "Vijitha Yapa",
-      contact: "+94 77 234 5678",
-      email: "contact@vijithayapa.com",
-      stalls: ["B05"],
-      category: "Academic",
-    },
-    {
-      id: "V003",
-      name: "Godage Publishers",
-      contact: "+94 77 345 6789",
-      email: "info@godagepublishers.lk",
-      stalls: ["C20", "C21", "C22"],
-      category: "Literature",
-    },
-  ];
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    fetch("/api/vendors")
+      .then((r) => r.json())
+      .then((data) => mounted && setVendors(data))
+      .catch(() => {})
+      .finally(() => mounted && setLoading(false));
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const filteredVendors = vendors.filter(
     (v) =>
@@ -99,40 +86,48 @@ const Vendors = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredVendors.map((vendor) => (
-                  <TableRow key={vendor.id}>
-                    <TableCell className="font-medium">{vendor.id}</TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{vendor.name}</div>
-                        <div className="text-sm text-muted-foreground">{vendor.email}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{vendor.contact}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-1 flex-wrap">
-                        {vendor.stalls.map((stall) => (
-                          <Badge key={stall} variant="secondary">
-                            {stall}
-                          </Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell>{vendor.category}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline">
-                          <Mail className="h-4 w-4 mr-1" />
-                          Email
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          <ExternalLink className="h-4 w-4 mr-1" />
-                          View
-                        </Button>
-                      </div>
-                    </TableCell>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground">Loading...</TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  filteredVendors.map((vendor) => {
+                    return (
+                      <TableRow key={vendor.id}>
+                        <TableCell className="font-medium">{vendor.id}</TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{vendor.name}</div>
+                            <div className="text-sm text-muted-foreground">{vendor.email}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{vendor.contact}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-1 flex-wrap">
+                            {vendor.stalls.map((stall) => (
+                              <Badge key={stall} variant="secondary">
+                                {stall}
+                              </Badge>
+                            ))}
+                          </div>
+                        </TableCell>
+                        <TableCell>{vendor.category}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline">
+                              <Mail className="h-4 w-4 mr-1" />
+                              Email
+                            </Button>
+                            <Button size="sm" variant="outline">
+                              <ExternalLink className="h-4 w-4 mr-1" />
+                              View
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
               </TableBody>
             </Table>
           </CardContent>

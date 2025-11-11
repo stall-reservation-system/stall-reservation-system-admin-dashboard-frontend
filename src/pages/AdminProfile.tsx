@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { User, Mail, Phone, ShieldCheck, CalendarCheck, MapPin, Cake, Fingerprint, Key } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface AdminProfile {
   employeeId: string;
@@ -21,46 +21,52 @@ interface AdminProfile {
   avatar: string;
 }
 
-const adminProfile: AdminProfile = {
-  employeeId: "CMBF001",
-  firstName: "Nuwan",
-  lastName: "Perera",
-  email: "admin@bookfair.lk",
-  phone: "+94 77 123 4567",
-  address: "No. 123, Main Street, Colombo, Sri Lanka",
-  role: "Administrator",
-  dob: "1990-07-15",
-  nic: "901234567V",
-  joined: "Jan 10, 2023",
-  lastLogin: "Nov 2, 2025, 09:15 AM",
-  avatar: "https://ui-avatars.com/api/?name=Nuwan+Perera&background=0D8ABC&color=fff",
-};
-
 const Profile = () => {
   const [editMode, setEditMode] = useState(false);
-  const [profile, setProfile] = useState<AdminProfile>(adminProfile);
+  const [profile, setProfile] = useState<AdminProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    fetch("/api/profile")
+      .then((r) => r.json())
+      .then((data) => {
+        if (mounted) setProfile(data);
+      })
+      .catch(() => {})
+      .finally(() => mounted && setLoading(false));
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setProfile({ ...profile, [e.target.name]: e.target.value });
+    if (!profile) return;
+    setProfile({ ...profile, [e.target.name]: e.target.value } as AdminProfile);
   };
 
   const handleSave = () => {
     setEditMode(false);
-    // Normally, save to backend here
+    // Normally, save to backend here (POST/PUT to /api/profile)
   };
 
   return (
     <DashboardLayout>
       <div className="max-w-4xl mx-auto py-12">
-        {/* Reduced height of profile box */}
-        <Card className="shadow-xl border-none bg-gradient-to-br from-accent/10 to-background min-h-[320px]">
-          <CardHeader className="flex flex-row md:items-center items-start gap-8 pb-6 border-b">
-            <img
-              src={profile.avatar}
-              alt="Admin Avatar"
-              className="w-24 h-24 rounded-full border-4 border-accent shadow-lg transition-transform hover:scale-105"
-            />
-            <div className="flex-1">
+        {loading && <div className="text-sm text-muted-foreground mb-4">Loading profile…</div>}
+        {!loading && !profile && (
+          <div className="text-sm text-destructive mb-4">Failed to load profile.</div>
+        )}
+        {profile && (
+          <Card className="shadow-xl border-none bg-gradient-to-br from-accent/10 to-background min-h-[320px]">
+            <CardHeader className="flex flex-row md:items-center items-start gap-8 pb-6 border-b">
+              <img
+                src={profile.avatar}
+                alt="Admin Avatar"
+                className="w-24 h-24 rounded-full border-4 border-accent shadow-lg transition-transform hover:scale-105"
+              />
+              <div className="flex-1">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <div>
                   {/* Employee ID is never editable */}
@@ -150,93 +156,94 @@ const Profile = () => {
                   </div>
                 </div>
               </div>
-              {!editMode && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="mt-4"
-                  onClick={() => setEditMode(true)}
-                >
-                  Edit Profile
-                </Button>
-              )}
-            </div>
-          </CardHeader>
+                {!editMode && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="mt-4"
+                    onClick={() => setEditMode(true)}
+                  >
+                    Edit Profile
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
 
-          <CardContent className="space-y-6 px-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mt-2">
-              <div className="space-y-4">
-                <div>
-                  <div className="flex items-center gap-2 text-base font-medium">
-                    <Cake className="w-5 h-5 text-accent" />
-                    Date of Birth:
+            <CardContent className="space-y-6 px-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mt-2">
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex items-center gap-2 text-base font-medium">
+                      <Cake className="w-5 h-5 text-accent" />
+                      Date of Birth:
+                    </div>
+                    {editMode ? (
+                      <Input
+                        name="dob"
+                        value={profile.dob}
+                        onChange={handleChange}
+                        className="max-w-xs mt-1"
+                        placeholder="Date of Birth"
+                        type="date"
+                      />
+                    ) : (
+                      <div className="pl-7 mt-1 text-foreground">{profile.dob}</div>
+                    )}
                   </div>
-                  {editMode ? (
-                    <Input
-                      name="dob"
-                      value={profile.dob}
-                      onChange={handleChange}
-                      className="max-w-xs mt-1"
-                      placeholder="Date of Birth"
-                      type="date"
-                    />
-                  ) : (
-                    <div className="pl-7 mt-1 text-foreground">{profile.dob}</div>
-                  )}
+                  <div>
+                    <div className="flex items-center gap-2 text-base font-medium">
+                      <Fingerprint className="w-5 h-5 text-accent" />
+                      NIC:
+                    </div>
+                    {editMode ? (
+                      <Input
+                        name="nic"
+                        value={profile.nic}
+                        onChange={handleChange}
+                        className="max-w-xs mt-1"
+                        placeholder="NIC"
+                      />
+                    ) : (
+                      <div className="pl-7 mt-1 text-foreground">{profile.nic}</div>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <div className="flex items-center gap-2 text-base font-medium">
-                    <Fingerprint className="w-5 h-5 text-accent" />
-                    NIC:
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex items-center gap-2 text-base font-medium">
+                      <CalendarCheck className="w-5 h-5 text-accent" />
+                      Joined:
+                    </div>
+                    <div className="pl-7 mt-1 text-foreground font-semibold">
+                      {profile.joined}
+                    </div>
                   </div>
-                  {editMode ? (
-                    <Input
-                      name="nic"
-                      value={profile.nic}
-                      onChange={handleChange}
-                      className="max-w-xs mt-1"
-                      placeholder="NIC"
-                    />
-                  ) : (
-                    <div className="pl-7 mt-1 text-foreground">{profile.nic}</div>
-                  )}
+                  <div>
+                    <div className="flex items-center gap-2 text-base font-medium">
+                      <ShieldCheck className="w-5 h-5 text-accent" />
+                      Last Login:
+                    </div>
+                    <div className="pl-7 mt-1">
+                      <Badge variant="outline" className="px-3 py-1 text-sm">
+                        {profile.lastLogin}
+                      </Badge>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex items-center gap-2 text-base font-medium">
-                    <CalendarCheck className="w-5 h-5 text-accent" />
-                    Joined:
-                  </div>
-                  <div className="pl-7 mt-1 text-foreground font-semibold">
-                    {profile.joined}
-                  </div>
+              {editMode && (
+                <div className="flex gap-2 justify-end mt-4">
+                  <Button size="sm" variant="secondary" onClick={handleSave}>
+                    Save
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setEditMode(false)}>
+                    Cancel
+                  </Button>
                 </div>
-                <div>
-                  <div className="flex items-center gap-2 text-base font-medium">
-                    <ShieldCheck className="w-5 h-5 text-accent" />
-                    Last Login:
-                  </div>
-                  <div className="pl-7 mt-1">
-                    <Badge variant="outline" className="px-3 py-1 text-sm">
-                      {profile.lastLogin}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-            </div>
-            {editMode && (
-              <div className="flex gap-2 justify-end mt-4">
-                <Button size="sm" variant="accent" onClick={handleSave}>
-                  Save
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => setEditMode(false)}>
-                  Cancel
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
     </DashboardLayout>
   );
