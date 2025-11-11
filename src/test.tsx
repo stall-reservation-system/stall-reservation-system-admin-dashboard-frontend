@@ -74,3 +74,17 @@ export const mockVendors = [
     category: "Academic",
   },
 ];
+
+export const mockDashboard = {
+  stats: [
+    { title: "Total Stalls", value: 4, color: "text-primary" },
+    { title: "Reserved", value: 2, color: "text-green-600" },
+    { title: "Available", value: 2, color: "text-highlight" },
+    { title: "Pending Email", value: 1, color: "text-destructive" },
+  ],
+  recentActivity: [
+    { publisher: "Sarasavi Bookshop", stalls: "A12, A13", time: "2 hours ago", status: "confirmed" },
+    { publisher: "Vijitha Yapa", stalls: "B05", time: "5 hours ago", status: "pending" },
+    { publisher: "Godage Publishers", stalls: "C20, C21, C22", time: "1 day ago", status: "confirmed" },
+  ],
+};
