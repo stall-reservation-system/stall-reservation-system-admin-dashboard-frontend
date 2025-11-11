@@ -40,11 +40,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { icon: Map, label: "Stall Map", path: "/stall-map" },
     { icon: Users, label: "Vendors", path: "/vendors" },
     { icon: List, label: "Reservations", path: "/reservations" },
-    // Removed Admin Profile from sidebar
+ 
   ];
 
-  // Sidebar should be sticky, not scroll with main content
-  // Profile section is clickable and routes to /profile
+  
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
