@@ -6,6 +6,7 @@ import {
   LayoutDashboard, 
   Map, 
   List, 
+  Users,
   LogOut,
   BookOpen
 } from "lucide-react";
@@ -37,6 +38,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
     { icon: Map, label: "Stall Map", path: "/stall-map" },
+    { icon: Users, label: "Vendors", path: "/vendors" },
     { icon: List, label: "Reservations", path: "/reservations" },
     // Removed Admin Profile from sidebar
   ];
@@ -55,7 +57,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               <BookOpen className="w-6 h-6 text-sidebar-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-sidebar-foreground font-bold text-lg">Bookfair</h1>
+              <h1 className="text-sidebar-foreground font-bold text-md">CMB Bookfair</h1>
               <p className="text-sidebar-foreground/70 text-xs">Admin Portal</p>
             </div>
           </div>
