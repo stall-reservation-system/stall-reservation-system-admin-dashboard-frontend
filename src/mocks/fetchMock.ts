@@ -1,4 +1,4 @@
-import { mockProfile, mockReservations, mockStalls, mockVendors } from "@/test";
+import { mockProfile, mockReservations, mockStalls, mockVendors, mockDashboard } from "@/test";
 
 // Simple in-browser fetch interceptor to provide mock REST responses for /api/* endpoints.
 // This runs in the browser environment and should be imported once (e.g. in main.tsx).
@@ -34,6 +34,8 @@ window.fetch = async (input: RequestInfo, init?: RequestInit) => {
           return jsonResponse(mockProfile);
         case "reservations":
           return jsonResponse(mockReservations);
+        case "dashboard":
+          return jsonResponse(mockDashboard);
         case "stalls":
           return jsonResponse(mockStalls);
         case "vendors":
