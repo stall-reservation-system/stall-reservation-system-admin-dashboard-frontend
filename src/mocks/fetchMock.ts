@@ -46,6 +46,39 @@ window.fetch = async (input: RequestInfo, init?: RequestInit) => {
           return jsonResponse({ message: "Method not implemented in mock for profile." }, 405);
         }
 
+        // Support creating vendors via POST /api/vendors
+        if (path === "vendors") {
+          if (method === "GET") return jsonResponse(mockVendors);
+          if (method === "POST") {
+            try {
+              const bodyText = init && init.body ? String(init.body) : null;
+              const body = bodyText ? JSON.parse(bodyText) : {};
+              // ensure stalls is array
+              let stalls = [] as string[];
+              if (Array.isArray(body.stalls)) stalls = body.stalls;
+              else if (typeof body.stalls === "string") stalls = body.stalls.split(",").map((s: string) => s.trim()).filter(Boolean);
+
+              // create id V###
+              const nextIdNum = mockVendors.length + 1;
+              const id = `V${String(nextIdNum).padStart(3, "0")}`;
+              const vendor = {
+                id,
+                name: body.name || "",
+                contact: body.contact || "",
+                email: body.email || "",
+                stalls,
+                category: body.category || "",
+              };
+              mockVendors.push(vendor as any);
+              return jsonResponse(vendor, 201);
+            } catch (err) {
+              return jsonResponse({ message: "Invalid JSON body" }, 400);
+            }
+          }
+
+          return jsonResponse({ message: "Method not implemented in mock for vendors." }, 405);
+        }
+
         // Only support GET for other endpoints by default
         if (method !== "GET") {
           return jsonResponse({ message: "Method not implemented in mock." }, 405);
