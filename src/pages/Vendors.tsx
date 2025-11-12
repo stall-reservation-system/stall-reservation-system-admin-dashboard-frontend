@@ -1,12 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, Mail, ExternalLink } from "lucide-react";
-import { Plus } from "lucide-react";
-import { useRef } from "react";
+import { Search, Mail, ExternalLink, Plus } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -22,7 +20,6 @@ interface Vendor {
   contact: string;
   email: string;
   stalls: string[];
-  category: string;
 }
 
 const Vendors = () => {
@@ -32,7 +29,6 @@ const Vendors = () => {
   const nameRef = useRef<HTMLInputElement | null>(null);
   const emailRef = useRef<HTMLInputElement | null>(null);
   const contactRef = useRef<HTMLInputElement | null>(null);
-  const categoryRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -52,9 +48,7 @@ const Vendors = () => {
     const name = nameRef.current?.value || "";
     const email = emailRef.current?.value || "";
     const contact = contactRef.current?.value || "";
-  const category = categoryRef.current?.value || "";
-
-  const payload = { name, email, contact, category };
+    const payload = { name, email, contact };
 
     try {
       const res = await fetch("/api/vendors", {
@@ -66,12 +60,11 @@ const Vendors = () => {
         const created = await res.json();
         setVendors((prev) => [...prev, created]);
         // clear form
-  if (nameRef.current) nameRef.current.value = "";
-  if (emailRef.current) emailRef.current.value = "";
-  if (contactRef.current) contactRef.current.value = "";
-  if (categoryRef.current) categoryRef.current.value = "";
+        if (nameRef.current) nameRef.current.value = "";
+        if (emailRef.current) emailRef.current.value = "";
+        if (contactRef.current) contactRef.current.value = "";
       } else {
-        console.error("Failed to create vendor", await res.text());
+        console.error("Failed to create business", await res.text());
       }
     } catch (err) {
       console.error(err);
@@ -85,20 +78,21 @@ const Vendors = () => {
       v.stalls.some((stall) => stall.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h2 className="text-3xl font-bold text-foreground mb-2">Vendors</h2>
-          <p className="text-muted-foreground">See all registered vendors and their stall assignments</p>
+          <h2 className="text-3xl font-bold text-foreground mb-2">Businesses</h2>
+          <p className="text-muted-foreground">See all registered businesses and their stall assignments</p>
         </div>
 
         <Card>
           <form onSubmit={handleCreate} className="p-4 border-b">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
               <div className="md:col-span-2">
                 <label className="text-sm text-muted-foreground">Name</label>
-                <Input ref={nameRef} placeholder="Vendor name" />
+                <Input ref={nameRef} placeholder="Business name" />
               </div>
               <div>
                 <label className="text-sm text-muted-foreground">Email</label>
@@ -108,20 +102,16 @@ const Vendors = () => {
                 <label className="text-sm text-muted-foreground">Contact</label>
                 <Input ref={contactRef} placeholder="Contact" />
               </div>
-              <div>
-                <label className="text-sm text-muted-foreground">Category</label>
-                <Input ref={categoryRef} placeholder="Category" />
-              </div>
               <div className="flex items-center">
                 <Button type="submit" className="w-full" variant="secondary">
-                  <Plus className="mr-2 h-4 w-4" /> Add Vendor
+                  <Plus className="mr-2 h-4 w-4" /> Add Business
                 </Button>
               </div>
             </div>
           </form>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>All Vendors</CardTitle>
+              <CardTitle>All Businesses</CardTitle>
               <div className="flex items-center gap-2">
                 <div className="relative w-64">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -140,17 +130,16 @@ const Vendors = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>ID</TableHead>
-                  <TableHead>Vendor</TableHead>
+                  <TableHead>Business</TableHead>
                   <TableHead>Contact</TableHead>
                   <TableHead>Stalls</TableHead>
-                  <TableHead>Category</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground">Loading...</TableCell>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground">Loading...</TableCell>
                   </TableRow>
                 ) : (
                   filteredVendors.map((vendor) => {
@@ -173,7 +162,6 @@ const Vendors = () => {
                             ))}
                           </div>
                         </TableCell>
-                        <TableCell>{vendor.category}</TableCell>
                         <TableCell>
                           <div className="flex gap-2">
                             <Button size="sm" variant="outline">

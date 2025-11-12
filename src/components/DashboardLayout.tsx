@@ -70,7 +70,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
     { icon: Map, label: "Stall Map", path: "/stall-map" },
-    { icon: Users, label: "Vendors", path: "/vendors" },
+    { icon: Users, label: "Businesses", path: "/vendors" },
     { icon: List, label: "Reservations", path: "/reservations" },
  
   ];

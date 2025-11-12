@@ -105,6 +105,31 @@ window.fetch = async (input: RequestInfo, init?: RequestInit) => {
           }
         }
 
+        // Support reservation actions: POST /api/reservations/{id}/approve or /decline
+        if (path.startsWith("reservations/") && method === "POST") {
+          try {
+            const parts = path.split("/"); // ["reservations", "{id}", "approve"|"decline"]
+            const resId = parts[1];
+            const action = parts[2];
+
+            const reservation = mockReservations.find((r) => r.id === resId);
+            if (!reservation) return jsonResponse({ message: "Reservation not found" }, 404);
+
+            if (action === "approve") {
+              reservation.status = "confirmed";
+              reservation.emailSent = true;
+            } else if (action === "decline") {
+              reservation.status = "declined";
+            } else {
+              return jsonResponse({ message: "Action not implemented" }, 405);
+            }
+
+            return jsonResponse(reservation, 200);
+          } catch (err) {
+            return jsonResponse({ message: "Invalid request" }, 400);
+          }
+        }
+
         // Only support GET for other endpoints by default
         if (method !== "GET") {
           return jsonResponse({ message: "Method not implemented in mock." }, 405);
