@@ -79,6 +79,32 @@ window.fetch = async (input: RequestInfo, init?: RequestInit) => {
           return jsonResponse({ message: "Method not implemented in mock for vendors." }, 405);
         }
 
+        // Support assigning a stall: POST /api/stalls/{id}/assign
+        if (path.startsWith("stalls/") && method === "POST" && path.endsWith("/assign")) {
+          try {
+            const parts = path.split("/"); // ["stalls", "{id}", "assign"]
+            const stallId = parts[1];
+            const bodyText = init && init.body ? String(init.body) : null;
+            const body = bodyText ? JSON.parse(bodyText) : {};
+            const vendorId = body.vendorId;
+
+            // find vendor name from mockVendors if possible
+            const vendor = mockVendors.find((v) => v.id === vendorId);
+            const vendorName = vendor ? vendor.name : vendorId || "";
+
+            // find the stall in mockStalls and update
+            const stall = (mockStalls as any).find((s: any) => s.id === stallId);
+            if (!stall) return jsonResponse({ message: "Stall not found" }, 404);
+
+            stall.status = "reserved";
+            stall.publisher = vendorName;
+
+            return jsonResponse(stall, 200);
+          } catch (err) {
+            return jsonResponse({ message: "Invalid JSON body" }, 400);
+          }
+        }
+
         // Only support GET for other endpoints by default
         if (method !== "GET") {
           return jsonResponse({ message: "Method not implemented in mock." }, 405);
