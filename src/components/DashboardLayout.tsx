@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
+import { transformApiUserToProfile } from "@/utils/profileTransform";
 import {
   LayoutDashboard,
   Map,
@@ -13,7 +14,17 @@ import {
 } from "lucide-react";
 
 interface AdminProfile {
-  name: string;
+  employeeId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address: string;
+  role: string;
+  dob: string;
+  nic: string;
+  joined: string;
+  lastLogin: string;
   avatar: string;
 }
 
@@ -26,41 +37,25 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
-  const [adminProfile, setAdminProfile] = useState<AdminProfile>({
-    name: user?.name || "Admin",
-    avatar:
-      "https://ui-avatars.com/api/?name=Admin&background=0D8ABC&color=fff",
-  });
+  const [adminProfile, setAdminProfile] = useState<AdminProfile | null>(null);
 
   useEffect(() => {
     let mounted = true;
-    // initial fetch for sidebar profile
-    fetch("/api/profile")
-      .then((r) => r.json())
-      .then((data) => {
-        if (!mounted || !data) return;
-        const name =
-          data.firstName && data.lastName
-            ? `${data.firstName} ${data.lastName}`
-            : data.name || "Admin";
-        setAdminProfile({ name, avatar: data.avatar || adminProfile.avatar });
-      })
-      .catch(() => {})
-      .finally(() => {});
+
+    // Transform authenticated user data to profile format
+    if (user) {
+      const profile = transformApiUserToProfile(user);
+      if (mounted) {
+        setAdminProfile(profile);
+      }
+    }
 
     const onUpdate = (e: Event) => {
       try {
         // CustomEvent used in save
         const detail = (e as CustomEvent).detail;
-        if (detail) {
-          const name =
-            detail.firstName && detail.lastName
-              ? `${detail.firstName} ${detail.lastName}`
-              : detail.name || adminProfile.name;
-          setAdminProfile({
-            name,
-            avatar: detail.avatar || adminProfile.avatar,
-          });
+        if (detail && mounted) {
+          setAdminProfile(detail);
         }
       } catch (err) {}
     };
@@ -71,7 +66,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       mounted = false;
       window.removeEventListener("profile-updated", onUpdate as EventListener);
     };
-  }, []);
+  }, [user]);
 
   const handleLogout = () => {
     logout();
@@ -136,13 +131,18 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             style={{ textDecoration: "none", flex: 1, minWidth: 0 }}
           >
             <img
-              src={adminProfile.avatar}
+              src={
+                adminProfile?.avatar ||
+                "https://ui-avatars.com/api/?name=A&background=0D8ABC&color=fff"
+              }
               alt="Admin Avatar"
               className="w-9 h-9 rounded-full"
             />
             <div className="truncate">
               <div className="text-sidebar-foreground font-semibold leading-tight truncate">
-                {adminProfile.name}
+                {adminProfile
+                  ? `${adminProfile.firstName} ${adminProfile.lastName}`
+                  : "Admin"}
               </div>
               <div className="text-xs text-sidebar-foreground/70">
                 Account settings

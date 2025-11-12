@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { AuthContextType, User, LoginResponse } from "@/types/auth";
+import { setMockAuthenticatedUser } from "@/mocks/fetchMock";
 import { toast } from "sonner";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -66,6 +67,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       localStorage.setItem(STORAGE_KEY_TOKEN, data.token);
       localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(data.user));
 
+      // Update mock with authenticated user
+      try {
+        setMockAuthenticatedUser(data.user);
+      } catch (e) {
+        // Mock not available (production build)
+      }
+
       setToken(data.token);
       setUser(data.user);
 
@@ -82,6 +90,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const logout = () => {
     localStorage.removeItem(STORAGE_KEY_TOKEN);
     localStorage.removeItem(STORAGE_KEY_USER);
+
+    // Clear mock authenticated user
+    try {
+      setMockAuthenticatedUser(null);
+    } catch (e) {
+      // Mock not available (production build)
+    }
+
     setToken(null);
     setUser(null);
     toast.success("Logged out successfully");
