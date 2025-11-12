@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Search, Mail, ExternalLink } from "lucide-react";
+import { Plus } from "lucide-react";
+import { useRef } from "react";
 import {
   Table,
   TableBody,
@@ -27,6 +29,10 @@ const Vendors = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
+  const nameRef = useRef<HTMLInputElement | null>(null);
+  const emailRef = useRef<HTMLInputElement | null>(null);
+  const contactRef = useRef<HTMLInputElement | null>(null);
+  const categoryRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -40,6 +46,37 @@ const Vendors = () => {
       mounted = false;
     };
   }, []);
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = nameRef.current?.value || "";
+    const email = emailRef.current?.value || "";
+    const contact = contactRef.current?.value || "";
+  const category = categoryRef.current?.value || "";
+
+  const payload = { name, email, contact, category };
+
+    try {
+      const res = await fetch("/api/vendors", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        const created = await res.json();
+        setVendors((prev) => [...prev, created]);
+        // clear form
+  if (nameRef.current) nameRef.current.value = "";
+  if (emailRef.current) emailRef.current.value = "";
+  if (contactRef.current) contactRef.current.value = "";
+  if (categoryRef.current) categoryRef.current.value = "";
+      } else {
+        console.error("Failed to create vendor", await res.text());
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const filteredVendors = vendors.filter(
     (v) =>
@@ -57,6 +94,31 @@ const Vendors = () => {
         </div>
 
         <Card>
+          <form onSubmit={handleCreate} className="p-4 border-b">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
+              <div className="md:col-span-2">
+                <label className="text-sm text-muted-foreground">Name</label>
+                <Input ref={nameRef} placeholder="Vendor name" />
+              </div>
+              <div>
+                <label className="text-sm text-muted-foreground">Email</label>
+                <Input ref={emailRef} placeholder="Email" />
+              </div>
+              <div>
+                <label className="text-sm text-muted-foreground">Contact</label>
+                <Input ref={contactRef} placeholder="Contact" />
+              </div>
+              <div>
+                <label className="text-sm text-muted-foreground">Category</label>
+                <Input ref={categoryRef} placeholder="Category" />
+              </div>
+              <div className="flex items-center">
+                <Button type="submit" className="w-full" variant="secondary">
+                  <Plus className="mr-2 h-4 w-4" /> Add Vendor
+                </Button>
+              </div>
+            </div>
+          </form>
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>All Vendors</CardTitle>
