@@ -23,12 +23,14 @@ interface Reservation {
   genre: string;
   emailSent: boolean;
   qrCode: string;
+  status?: string;
 }
 
 const Reservations = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     let mounted = true;
@@ -49,6 +51,32 @@ const Reservations = () => {
       res.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       res.stalls.some((stall) => stall.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  const performReservationAction = async (id: string, action: "approve" | "decline") => {
+    setActionLoading((p) => ({ ...p, [id]: true }));
+    try {
+      const res = await fetch(`/api/reservations/${id}/${action}`, { method: "POST" });
+      if (res.ok) {
+        const updated = await res.json().catch(() => null);
+        if (updated && updated.id) {
+          setReservations((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+        } else {
+          setReservations((prev) => prev.map((r) => (r.id === id ? { ...r, status: action === "approve" ? "confirmed" : "declined" } : r)));
+        }
+      } else {
+        const text = await res.text().catch(() => "");
+        window.alert(`Failed to ${action} reservation: ${text || res.statusText}`);
+      }
+    } catch (err) {
+      window.alert("Error performing action.");
+    } finally {
+      setActionLoading((p) => {
+        const copy = { ...p };
+        delete copy[id];
+        return copy;
+      });
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -105,6 +133,7 @@ const Reservations = () => {
                           <div>
                             <div className="font-medium">{reservation.publisher}</div>
                             <div className="text-sm text-muted-foreground">{reservation.email}</div>
+                            <div className="text-sm text-muted-foreground mt-1">Status: {reservation.status ?? "pending"}</div>
                           </div>
                         </TableCell>
                         <TableCell>{reservation.contact}</TableCell>
@@ -137,7 +166,7 @@ const Reservations = () => {
                           <Badge variant="outline">{reservation.qrCode}</Badge>
                         </TableCell>
                         <TableCell>
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 items-center">
                             <Button size="sm" variant="outline">
                               <Mail className="h-4 w-4 mr-1" />
                               Email
@@ -145,6 +174,22 @@ const Reservations = () => {
                             <Button size="sm" variant="outline">
                               <QrCode className="h-4 w-4 mr-1" />
                               QR
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              disabled={!!actionLoading[reservation.id] || reservation.status === "confirmed"}
+                              onClick={() => performReservationAction(reservation.id, "approve")}
+                            >
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              disabled={!!actionLoading[reservation.id] || reservation.status === "declined"}
+                              onClick={() => performReservationAction(reservation.id, "decline")}
+                            >
+                              Decline
                             </Button>
                           </div>
                         </TableCell>

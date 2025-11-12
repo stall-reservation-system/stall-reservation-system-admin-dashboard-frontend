@@ -24,6 +24,7 @@ export const mockReservations = [
     stalls: ["A12", "A13"],
     genre: "General Books",
     emailSent: true,
+    status: "confirmed",
     qrCode: "QR001",
   },
   {
@@ -34,6 +35,7 @@ export const mockReservations = [
     stalls: ["B05"],
     genre: "Academic",
     emailSent: false,
+    status: "pending",
     qrCode: "QR002",
   },
   {
@@ -44,6 +46,7 @@ export const mockReservations = [
     stalls: ["C20", "C21", "C22"],
     genre: "Literature",
     emailSent: true,
+    status: "confirmed",
     qrCode: "QR003",
   },
 ];
