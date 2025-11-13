@@ -2,18 +2,29 @@ import { ReactNode, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { 
-  LayoutDashboard, 
-  Map, 
-  List, 
+import { useAuth } from "@/context/AuthContext";
+import { transformApiUserToProfile } from "@/utils/profileTransform";
+import {
+  LayoutDashboard,
+  Map,
+  List,
   Users,
   LogOut,
-  BookOpen
+  BookOpen,
 } from "lucide-react";
-import { toast } from "sonner";
 
 interface AdminProfile {
-  name: string;
+  employeeId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address: string;
+  role: string;
+  dob: string;
+  nic: string;
+  joined: string;
+  lastLogin: string;
   avatar: string;
 }
 
@@ -24,32 +35,27 @@ interface DashboardLayoutProps {
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
-  const [adminProfile, setAdminProfile] = useState<AdminProfile>({
-    name: "Admin",
-    avatar: "https://ui-avatars.com/api/?name=Admin&background=0D8ABC&color=fff",
-  });
+  const [adminProfile, setAdminProfile] = useState<AdminProfile | null>(null);
 
   useEffect(() => {
     let mounted = true;
-    // initial fetch for sidebar profile
-    fetch("/api/profile")
-      .then((r) => r.json())
-      .then((data) => {
-        if (!mounted || !data) return;
-        const name = data.firstName && data.lastName ? `${data.firstName} ${data.lastName}` : data.name || "Admin";
-        setAdminProfile({ name, avatar: data.avatar || adminProfile.avatar });
-      })
-      .catch(() => {})
-      .finally(() => {});
+
+    // Transform authenticated user data to profile format
+    if (user) {
+      const profile = transformApiUserToProfile(user);
+      if (mounted) {
+        setAdminProfile(profile);
+      }
+    }
 
     const onUpdate = (e: Event) => {
       try {
         // CustomEvent used in save
         const detail = (e as CustomEvent).detail;
-        if (detail) {
-          const name = detail.firstName && detail.lastName ? `${detail.firstName} ${detail.lastName}` : detail.name || adminProfile.name;
-          setAdminProfile({ name, avatar: detail.avatar || adminProfile.avatar });
+        if (detail && mounted) {
+          setAdminProfile(detail);
         }
       } catch (err) {}
     };
@@ -60,10 +66,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       mounted = false;
       window.removeEventListener("profile-updated", onUpdate as EventListener);
     };
-  }, []);
+  }, [user]);
 
   const handleLogout = () => {
-    toast.success("Logged out successfully");
+    logout();
     navigate("/login");
   };
 
@@ -72,14 +78,13 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { icon: Map, label: "Stall Map", path: "/stall-map" },
     { icon: Users, label: "Businesses", path: "/vendors" },
     { icon: List, label: "Reservations", path: "/reservations" },
- 
   ];
 
-  
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
-      <aside className="w-64 bg-sidebar border-r border-sidebar-border relative flex flex-col"
+      <aside
+        className="w-64 bg-sidebar border-r border-sidebar-border relative flex flex-col"
         style={{ position: "sticky", top: 0, height: "100vh" }}
       >
         <div className="p-6 border-b border-sidebar-border">
@@ -88,17 +93,19 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               <BookOpen className="w-6 h-6 text-sidebar-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-sidebar-foreground font-bold text-md">CMB Bookfair</h1>
+              <h1 className="text-sidebar-foreground font-bold text-md">
+                CMB Bookfair
+              </h1>
               <p className="text-sidebar-foreground/70 text-xs">Admin Portal</p>
             </div>
           </div>
         </div>
-        
+
         <nav className="p-4 space-y-2 flex-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
-            
+
             return (
               <Link key={item.path} to={item.path}>
                 <Button
@@ -118,19 +125,24 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
         {/* Admin profile display above logout */}
         <div className="w-64 p-4 border-t border-sidebar-border flex items-center justify-between">
-          <Link 
-            to="/profile" 
+          <Link
+            to="/profile"
             className="flex items-center gap-3 hover:bg-sidebar-accent rounded-md px-2 py-1 transition"
             style={{ textDecoration: "none", flex: 1, minWidth: 0 }}
           >
             <img
-              src={adminProfile.avatar}
+              src={
+                adminProfile?.avatar ||
+                "https://ui-avatars.com/api/?name=A&background=0D8ABC&color=fff"
+              }
               alt="Admin Avatar"
               className="w-9 h-9 rounded-full"
             />
             <div className="truncate">
               <div className="text-sidebar-foreground font-semibold leading-tight truncate">
-                {adminProfile.name}
+                {adminProfile
+                  ? `${adminProfile.firstName} ${adminProfile.lastName}`
+                  : "Admin"}
               </div>
               <div className="text-xs text-sidebar-foreground/70">
                 Account settings
@@ -151,9 +163,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
       {/* Main Content */}
       <main className="flex-1 bg-background">
-        <div className="p-8">
-          {children}
-        </div>
+        <div className="p-8">{children}</div>
       </main>
     </div>
   );
