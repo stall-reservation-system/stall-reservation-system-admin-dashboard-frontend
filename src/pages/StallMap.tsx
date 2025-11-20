@@ -1,5 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -7,6 +7,9 @@ import { cn } from "@/lib/utils";
 type StallSize = "small" | "medium" | "large";
 type StallStatus = "available" | "reserved";
 
+/**
+ * Stall model used on the Stall Map page
+ */
 interface Stall {
   id: string;
   size: StallSize;
@@ -14,6 +17,11 @@ interface Stall {
   publisher?: string;
 }
 
+/**
+ * Page: StallMap
+ * Shows a venue map of stalls and provides an assign-stall form.
+ * All logic remains unchanged — this comment and formatting are non-functional.
+ */
 const StallMap = () => {
   const [stalls, setStalls] = useState<Stall[]>([]);
   const [loading, setLoading] = useState(true);

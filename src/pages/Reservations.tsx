@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+/**
+ * Reservation model (used in Reservations page). Comments only — no logic changes.
+ */
 interface Reservation {
   id: string;
   publisher: string;
@@ -26,6 +29,12 @@ interface Reservation {
   status?: string;
 }
 
+/**
+ * Page: Reservations
+ * - Lists reservations
+ * - Allows approving/declining using REST endpoints (mocked in development)
+ * This file only receives formatting/comment updates.
+ */
 const Reservations = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [reservations, setReservations] = useState<Reservation[]>([]);

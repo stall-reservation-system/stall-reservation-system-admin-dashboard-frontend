@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+/**
+ * Business / Vendor model used on the Businesses page
+ */
 interface Vendor {
   id: string;
   name: string;
@@ -22,6 +25,11 @@ interface Vendor {
   stalls: string[];
 }
 
+/**
+ * Page: Vendors (renamed visually to Businesses)
+ * - presents vendors as businesses
+ * - removes 'category' field (UI-only formatting change)
+ */
 const Vendors = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [vendors, setVendors] = useState<Vendor[]>([]);
