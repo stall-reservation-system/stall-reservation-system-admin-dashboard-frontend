@@ -1,12 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { AuthContextType, User, LoginResponse } from "@/types/auth";
+import { ApiService } from "@/services/api";
 import { setMockAuthenticatedUser } from "@/mocks/fetchMock";
 import { toast } from "sonner";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8081/api";
 const STORAGE_KEY_TOKEN = "auth_token";
 const STORAGE_KEY_USER = "auth_user";
 
@@ -38,22 +37,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
+      const data = await ApiService.post<LoginResponse>("/auth/login", {
+        email,
+        password,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || `Login failed with status ${response.status}`
-        );
-      }
-
-      const data: LoginResponse = await response.json();
 
       // Check if user is admin
       if (data.user.role !== "admin") {

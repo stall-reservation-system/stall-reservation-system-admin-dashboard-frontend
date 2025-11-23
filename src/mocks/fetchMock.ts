@@ -3,6 +3,7 @@ import {
   mockReservations,
   mockStalls,
   mockVendors,
+  mockBusinesses,
   mockDashboard,
 } from "@/test";
 import { transformApiUserToProfile } from "@/utils/profileTransform";
@@ -76,42 +77,46 @@ window.fetch = async (input: RequestInfo, init?: RequestInit) => {
         );
       }
 
-      // Support creating vendors via POST /api/vendors
-      if (path === "vendors") {
-        if (method === "GET") return jsonResponse(mockVendors);
+      // Support business endpoints: GET /api/business/all
+      if (path === "business/all") {
+        if (method === "GET") {
+          return jsonResponse(mockBusinesses);
+        }
+        return jsonResponse(
+          { message: "Method not implemented in mock for business/all." },
+          405
+        );
+      }
+
+      // Support creating businesses via POST /api/business
+      if (path === "business") {
         if (method === "POST") {
           try {
             const bodyText = init && init.body ? String(init.body) : null;
             const body = bodyText ? JSON.parse(bodyText) : {};
-            // ensure stalls is array
-            let stalls = [] as string[];
-            if (Array.isArray(body.stalls)) stalls = body.stalls;
-            else if (typeof body.stalls === "string")
-              stalls = body.stalls
-                .split(",")
-                .map((s: string) => s.trim())
-                .filter(Boolean);
 
-            // create id V###
-            const nextIdNum = mockVendors.length + 1;
-            const id = `V${String(nextIdNum).padStart(3, "0")}`;
-            const vendor = {
-              id,
+            // Generate new businessId
+            const nextId =
+              Math.max(...mockBusinesses.map((b: any) => b.businessId), 0) + 1;
+
+            const newBusiness = {
+              businessId: nextId,
               name: body.name || "",
-              contact: body.contact || "",
-              email: body.email || "",
-              stalls,
-              category: body.category || "",
+              registrationNumber: body.registrationNumber || "",
+              contactNumber: body.contactNumber || "",
+              address: body.address || "",
+              createdAt: new Date().toISOString(),
+              verified: false,
             };
-            mockVendors.push(vendor as any);
-            return jsonResponse(vendor, 201);
+
+            mockBusinesses.push(newBusiness as any);
+            return jsonResponse(newBusiness, 201);
           } catch (err) {
             return jsonResponse({ message: "Invalid JSON body" }, 400);
           }
         }
-
         return jsonResponse(
-          { message: "Method not implemented in mock for vendors." },
+          { message: "Method not implemented in mock for business." },
           405
         );
       }
@@ -140,36 +145,37 @@ window.fetch = async (input: RequestInfo, init?: RequestInit) => {
           stall.status = "reserved";
           stall.publisher = vendorName;
 
-            return jsonResponse(stall, 200);
-          } catch (err) {
-            return jsonResponse({ message: "Invalid JSON body" }, 400);
-          }
+          return jsonResponse(stall, 200);
+        } catch (err) {
+          return jsonResponse({ message: "Invalid JSON body" }, 400);
         }
+      }
 
-        // Support reservation actions: POST /api/reservations/{id}/approve or /decline
-        if (path.startsWith("reservations/") && method === "POST") {
-          try {
-            const parts = path.split("/"); // ["reservations", "{id}", "approve"|"decline"]
-            const resId = parts[1];
-            const action = parts[2];
+      // Support reservation actions: POST /api/reservations/{id}/approve or /decline
+      if (path.startsWith("reservations/") && method === "POST") {
+        try {
+          const parts = path.split("/"); // ["reservations", "{id}", "approve"|"decline"]
+          const resId = parts[1];
+          const action = parts[2];
 
-            const reservation = mockReservations.find((r) => r.id === resId);
-            if (!reservation) return jsonResponse({ message: "Reservation not found" }, 404);
+          const reservation = mockReservations.find((r) => r.id === resId);
+          if (!reservation)
+            return jsonResponse({ message: "Reservation not found" }, 404);
 
-            if (action === "approve") {
-              reservation.status = "confirmed";
-              reservation.emailSent = true;
-            } else if (action === "decline") {
-              reservation.status = "declined";
-            } else {
-              return jsonResponse({ message: "Action not implemented" }, 405);
-            }
-
-            return jsonResponse(reservation, 200);
-          } catch (err) {
-            return jsonResponse({ message: "Invalid request" }, 400);
+          if (action === "approve") {
+            reservation.status = "confirmed";
+            reservation.emailSent = true;
+          } else if (action === "decline") {
+            reservation.status = "declined";
+          } else {
+            return jsonResponse({ message: "Action not implemented" }, 405);
           }
+
+          return jsonResponse(reservation, 200);
+        } catch (err) {
+          return jsonResponse({ message: "Invalid request" }, 400);
         }
+      }
 
       // Only support GET for other endpoints by default
       if (method !== "GET") {
@@ -188,6 +194,8 @@ window.fetch = async (input: RequestInfo, init?: RequestInit) => {
           return jsonResponse(mockStalls);
         case "vendors":
           return jsonResponse(mockVendors);
+        case "business/all":
+          return jsonResponse(mockBusinesses);
         default:
           return jsonResponse({ message: "Not found" }, 404);
       }
