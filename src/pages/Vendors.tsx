@@ -1,10 +1,17 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, Mail, ExternalLink, Plus } from "lucide-react";
+import {
+  Search,
+  Mail,
+  ExternalLink,
+  Plus,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { toast } from "sonner";
 import { ApiService } from "@/services/api";
 import {
@@ -41,12 +48,14 @@ const Vendors = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
   const [formData, setFormData] = useState({
     name: "",
     registrationNumber: "",
     contactNumber: "",
     address: "",
   });
+  const itemsPerPage = 8;
 
   useEffect(() => {
     let mounted = true;
@@ -120,7 +129,10 @@ const Vendors = () => {
         verified: created.verified,
       };
 
-      setVendors((prev) => [...prev, vendor]);
+      // Add new business at the top
+      setVendors((prev) => [vendor, ...prev]);
+      // Reset to first page to show new business
+      setCurrentPage(1);
       toast.success("Business created successfully");
 
       // Reset form
@@ -147,6 +159,17 @@ const Vendors = () => {
         stall.toLowerCase().includes(searchTerm.toLowerCase())
       )
   );
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredVendors.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedVendors = filteredVendors.slice(startIndex, endIndex);
+
+  // Reset to first page if current page exceeds total pages
+  if (currentPage > totalPages && totalPages > 0) {
+    setCurrentPage(1);
+  }
 
   return (
     <DashboardLayout>
@@ -270,7 +293,7 @@ const Vendors = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredVendors.map((vendor) => {
+                  paginatedVendors.map((vendor) => {
                     return (
                       <TableRow key={vendor.id}>
                         <TableCell className="font-medium">
@@ -314,6 +337,73 @@ const Vendors = () => {
               </TableBody>
             </Table>
           </CardContent>
+
+          {/* Pagination Controls */}
+          {filteredVendors.length > 0 && (
+            <div className="border-t px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                  Showing{" "}
+                  <span className="font-semibold text-foreground">
+                    {startIndex + 1}
+                  </span>{" "}
+                  to{" "}
+                  <span className="font-semibold text-foreground">
+                    {Math.min(endIndex, filteredVendors.length)}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-semibold text-foreground">
+                    {filteredVendors.length}
+                  </span>{" "}
+                  businesses
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="gap-1"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </Button>
+
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      (page) => (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(page)}
+                          className={
+                            currentPage === page ? "w-8 h-8 p-0" : "w-8 h-8 p-0"
+                          }
+                        >
+                          {page}
+                        </Button>
+                      )
+                    )}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
+                    disabled={currentPage === totalPages}
+                    className="gap-1"
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </Card>
       </div>
     </DashboardLayout>
