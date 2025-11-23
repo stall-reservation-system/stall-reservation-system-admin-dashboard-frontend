@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Search, Mail, ExternalLink, Plus } from "lucide-react";
+import { toast } from "sonner";
+import { ApiService } from "@/services/api";
 import {
   Table,
   TableBody,
@@ -14,12 +16,25 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+interface Business {
+  businessId: number;
+  name: string;
+  registrationNumber: string;
+  contactNumber: string;
+  address: string;
+  createdAt: string;
+  verified: boolean;
+}
+
 interface Vendor {
   id: string;
   name: string;
   contact: string;
-  email: string;
+  email?: string;
   stalls: string[];
+  registrationNumber?: string;
+  address?: string;
+  verified?: boolean;
 }
 
 const Vendors = () => {
@@ -27,17 +42,45 @@ const Vendors = () => {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
   const nameRef = useRef<HTMLInputElement | null>(null);
-  const emailRef = useRef<HTMLInputElement | null>(null);
   const contactRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     let mounted = true;
     setLoading(true);
-    fetch("/api/vendors")
-      .then((r) => r.json())
-      .then((data) => mounted && setVendors(data))
-      .catch(() => {})
-      .finally(() => mounted && setLoading(false));
+
+    const fetchBusinesses = async () => {
+      try {
+        const businesses = await ApiService.get<Business[]>("/business");
+
+        // Transform Business to Vendor format
+        const transformedVendors: Vendor[] = businesses.map((business) => ({
+          id: `B${business.businessId}`,
+          name: business.name,
+          contact: business.contactNumber,
+          email: "", // Backend doesn't provide email in response
+          stalls: [], // Will be fetched separately or from reservations
+          registrationNumber: business.registrationNumber,
+          address: business.address,
+          verified: business.verified,
+        }));
+
+        if (mounted) {
+          setVendors(transformedVendors);
+        }
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Failed to fetch businesses";
+        toast.error(message);
+        console.error("Failed to fetch businesses:", error);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchBusinesses();
+
     return () => {
       mounted = false;
     };
@@ -46,61 +89,86 @@ const Vendors = () => {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     const name = nameRef.current?.value || "";
-    const email = emailRef.current?.value || "";
     const contact = contactRef.current?.value || "";
-    const payload = { name, email, contact };
+    const registrationNumber = nameRef.current?.value || "";
+
+    if (!name || !contact) {
+      toast.error("Please fill in all fields");
+      return;
+    }
 
     try {
-      const res = await fetch("/api/vendors", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (res.ok) {
-        const created = await res.json();
-        setVendors((prev) => [...prev, created]);
-        // clear form
-        if (nameRef.current) nameRef.current.value = "";
-        if (emailRef.current) emailRef.current.value = "";
-        if (contactRef.current) contactRef.current.value = "";
-      } else {
-        console.error("Failed to create business", await res.text());
-      }
-    } catch (err) {
-      console.error(err);
+      const newBusiness: Partial<Business> = {
+        name,
+        contactNumber: contact,
+        registrationNumber,
+        address: "",
+        verified: false,
+      };
+
+      const created = await ApiService.post<Business>("/business", newBusiness);
+
+      const vendor: Vendor = {
+        id: `B${created.businessId}`,
+        name: created.name,
+        contact: created.contactNumber,
+        email: "",
+        stalls: [],
+        registrationNumber: created.registrationNumber,
+        address: created.address,
+        verified: created.verified,
+      };
+
+      setVendors((prev) => [...prev, vendor]);
+      toast.success("Business created successfully");
+
+      // clear form
+      if (nameRef.current) nameRef.current.value = "";
+      if (contactRef.current) contactRef.current.value = "";
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to create business";
+      toast.error(message);
+      console.error("Failed to create business:", error);
     }
   };
 
   const filteredVendors = vendors.filter(
     (v) =>
       v.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      v.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      v.stalls.some((stall) => stall.toLowerCase().includes(searchTerm.toLowerCase()))
+      v.contact.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      v.registrationNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      v.stalls.some((stall) =>
+        stall.toLowerCase().includes(searchTerm.toLowerCase())
+      )
   );
-
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h2 className="text-3xl font-bold text-foreground mb-2">Businesses</h2>
-          <p className="text-muted-foreground">See all registered businesses and their stall assignments</p>
+          <h2 className="text-3xl font-bold text-foreground mb-2">
+            Businesses
+          </h2>
+          <p className="text-muted-foreground">
+            See all registered businesses and their stall assignments
+          </p>
         </div>
 
         <Card>
           <form onSubmit={handleCreate} className="p-4 border-b">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
-              <div className="md:col-span-2">
-                <label className="text-sm text-muted-foreground">Name</label>
-                <Input ref={nameRef} placeholder="Business name" />
+              <div>
+                <label className="text-sm text-muted-foreground">
+                  Business Name
+                </label>
+                <Input ref={nameRef} placeholder="Business name" required />
               </div>
               <div>
-                <label className="text-sm text-muted-foreground">Email</label>
-                <Input ref={emailRef} placeholder="Email" />
-              </div>
-              <div>
-                <label className="text-sm text-muted-foreground">Contact</label>
-                <Input ref={contactRef} placeholder="Contact" />
+                <label className="text-sm text-muted-foreground">
+                  Contact Number
+                </label>
+                <Input ref={contactRef} placeholder="Contact number" required />
               </div>
               <div className="flex items-center">
                 <Button type="submit" className="w-full" variant="secondary">
@@ -130,43 +198,64 @@ const Vendors = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>ID</TableHead>
-                  <TableHead>Business</TableHead>
+                  <TableHead>Business Name</TableHead>
+                  <TableHead>Registration #</TableHead>
                   <TableHead>Contact</TableHead>
-                  <TableHead>Stalls</TableHead>
+                  <TableHead>Address</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground">Loading...</TableCell>
+                    <TableCell
+                      colSpan={7}
+                      className="text-center text-muted-foreground"
+                    >
+                      Loading businesses...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredVendors.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={7}
+                      className="text-center text-muted-foreground"
+                    >
+                      No businesses found
+                    </TableCell>
                   </TableRow>
                 ) : (
                   filteredVendors.map((vendor) => {
                     return (
                       <TableRow key={vendor.id}>
-                        <TableCell className="font-medium">{vendor.id}</TableCell>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{vendor.name}</div>
-                            <div className="text-sm text-muted-foreground">{vendor.email}</div>
-                          </div>
+                        <TableCell className="font-medium">
+                          {vendor.id}
                         </TableCell>
-                        <TableCell>{vendor.contact}</TableCell>
                         <TableCell>
-                          <div className="flex gap-1 flex-wrap">
-                            {vendor.stalls.map((stall) => (
-                              <Badge key={stall} variant="secondary">
-                                {stall}
-                              </Badge>
-                            ))}
-                          </div>
+                          <div className="font-medium">{vendor.name}</div>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {vendor.registrationNumber}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {vendor.contact}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {vendor.address || "N/A"}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={vendor.verified ? "default" : "outline"}
+                          >
+                            {vendor.verified ? "Verified" : "Pending"}
+                          </Badge>
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
                             <Button size="sm" variant="outline">
                               <Mail className="h-4 w-4 mr-1" />
-                              Email
+                              Contact
                             </Button>
                             <Button size="sm" variant="outline">
                               <ExternalLink className="h-4 w-4 mr-1" />

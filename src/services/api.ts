@@ -18,6 +18,7 @@ export class ApiService {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: "GET",
       headers: this.getHeaders(token),
+      credentials: "include",
     });
 
     return this.handleResponse<T>(response);
@@ -32,6 +33,7 @@ export class ApiService {
       method: "POST",
       headers: this.getHeaders(token),
       body: data ? JSON.stringify(data) : undefined,
+      credentials: "include",
     });
 
     return this.handleResponse<T>(response);
@@ -46,6 +48,7 @@ export class ApiService {
       method: "PUT",
       headers: this.getHeaders(token),
       body: data ? JSON.stringify(data) : undefined,
+      credentials: "include",
     });
 
     return this.handleResponse<T>(response);
@@ -60,6 +63,7 @@ export class ApiService {
       method: "PATCH",
       headers: this.getHeaders(token),
       body: data ? JSON.stringify(data) : undefined,
+      credentials: "include",
     });
 
     return this.handleResponse<T>(response);
@@ -69,6 +73,7 @@ export class ApiService {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: "DELETE",
       headers: this.getHeaders(token),
+      credentials: "include",
     });
 
     return this.handleResponse<T>(response);
@@ -76,10 +81,20 @@ export class ApiService {
 
   private static async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.message || `Request failed with status ${response.status}`
-      );
+      try {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || `Request failed with status ${response.status}`
+        );
+      } catch (error) {
+        // Handle cases where response body is not readable
+        if (response.status === 0) {
+          throw new Error(
+            "CORS Error: Unable to reach the server. Please check if the backend is running and CORS is properly configured."
+          );
+        }
+        throw new Error(`Request failed with status ${response.status}`);
+      }
     }
 
     return response.json();
