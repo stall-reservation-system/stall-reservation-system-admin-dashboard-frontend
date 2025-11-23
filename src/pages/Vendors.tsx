@@ -41,8 +41,12 @@ const Vendors = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
-  const nameRef = useRef<HTMLInputElement | null>(null);
-  const contactRef = useRef<HTMLInputElement | null>(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    registrationNumber: "",
+    contactNumber: "",
+    address: "",
+  });
 
   useEffect(() => {
     let mounted = true;
@@ -88,21 +92,18 @@ const Vendors = () => {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    const name = nameRef.current?.value || "";
-    const contact = contactRef.current?.value || "";
-    const registrationNumber = nameRef.current?.value || "";
 
-    if (!name || !contact) {
-      toast.error("Please fill in all fields");
+    if (!formData.name || !formData.contactNumber) {
+      toast.error("Please fill in all required fields");
       return;
     }
 
     try {
       const newBusiness: Partial<Business> = {
-        name,
-        contactNumber: contact,
-        registrationNumber,
-        address: "",
+        name: formData.name,
+        contactNumber: formData.contactNumber,
+        registrationNumber: formData.registrationNumber,
+        address: formData.address,
         verified: false,
       };
 
@@ -122,9 +123,13 @@ const Vendors = () => {
       setVendors((prev) => [...prev, vendor]);
       toast.success("Business created successfully");
 
-      // clear form
-      if (nameRef.current) nameRef.current.value = "";
-      if (contactRef.current) contactRef.current.value = "";
+      // Reset form
+      setFormData({
+        name: "",
+        registrationNumber: "",
+        contactNumber: "",
+        address: "",
+      });
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to create business";
@@ -162,13 +167,54 @@ const Vendors = () => {
                 <label className="text-sm text-muted-foreground">
                   Business Name
                 </label>
-                <Input ref={nameRef} placeholder="Business name" required />
+                <Input
+                  placeholder="Business name"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-sm text-muted-foreground">
+                  Registration Number
+                </label>
+                <Input
+                  placeholder="Registration number"
+                  value={formData.registrationNumber}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      registrationNumber: e.target.value,
+                    })
+                  }
+                />
               </div>
               <div>
                 <label className="text-sm text-muted-foreground">
                   Contact Number
                 </label>
-                <Input ref={contactRef} placeholder="Contact number" required />
+                <Input
+                  placeholder="Contact number"
+                  value={formData.contactNumber}
+                  onChange={(e) =>
+                    setFormData({ ...formData, contactNumber: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-sm text-muted-foreground">
+                  Address
+                </label>
+                <Input
+                  placeholder="Address"
+                  value={formData.address}
+                  onChange={(e) =>
+                    setFormData({ ...formData, address: e.target.value })
+                  }
+                />
               </div>
               <div className="flex items-center">
                 <Button type="submit" className="w-full" variant="secondary">
