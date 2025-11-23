@@ -205,9 +205,7 @@ const Vendors = () => {
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="text-sm text-muted-foreground">
-                  Address
-                </label>
+                <label className="text-sm text-muted-foreground">Address</label>
                 <Input
                   placeholder="Address"
                   value={formData.address}
